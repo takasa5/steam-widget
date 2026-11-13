@@ -51,6 +51,26 @@ The database schema is managed by Hibernate/JPA against the entities in `src/mai
 
 ---
 
+## Fonts for Non-Latin Text
+
+Widget images are drawn with Arial, which has no glyphs for Japanese, Chinese, Korean, Thai, Arabic and many other scripts. Text in those scripts (profile names, game names, "Now playing ...") is drawn character by character with a fallback font, so it no longer renders as empty boxes.
+
+Fallback fonts are searched in this order:
+
+1. Fonts bundled on the classpath: put the files in `src/main/resources/fonts/` and list their file names, one per line, in `src/main/resources/fonts/fallback.txt`.
+2. Fonts in a directory set with `-Dwidget.fonts.dir=/path/to/fonts` or the `WIDGET_FONTS_DIR` environment variable.
+3. Fonts installed on the machine. Noto fonts are preferred when several fonts can draw a character.
+
+On a server, installing the Noto packages is usually enough. For Debian/Ubuntu-based images:
+
+```bash
+apt-get install -y fonts-noto-core fonts-noto-cjk
+```
+
+`fonts-noto-cjk` covers Japanese, Simplified/Traditional Chinese and Korean; `fonts-noto-core` covers most other scripts (Thai, Arabic, Hebrew, Devanagari, ...). Without any of these, the widget still renders, and characters no font can display fall back to the old empty boxes.
+
+---
+
 ## Running Locally
 
 Build and run with the Maven wrapper — no local Maven install required:

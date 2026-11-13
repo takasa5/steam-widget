@@ -1,5 +1,6 @@
 package codes.sharky.steamwidget.service;
 
+import codes.sharky.steamwidget.utils.FallbackTextRenderer;
 import codes.sharky.steamwidget.utils.IPUtils;
 import codes.sharky.steamwidget.utils.PersonaStateFormatter;
 import com.google.common.base.Strings;
@@ -25,6 +26,7 @@ import codes.sharky.steamwidget.model.ThemePalette;
 import codes.sharky.steamwidget.model.WidgetStyle;
 import codes.sharky.steamwidget.repository.HitRepository;
 import codes.sharky.steamwidget.repository.ProfileRepository;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +68,15 @@ public class SteamWidgetService {
         this.profileService = profileService;
         this.trackingProfileService = trackingProfileService;
         this.themeService = themeService;
+    }
+
+    /**
+     * Loads the fallback fonts at startup (instead of on the first widget request) and logs a
+     * warning if no installed font covers common non-Latin scripts.
+     */
+    @PostConstruct
+    void loadFallbackFonts() {
+        FallbackTextRenderer.checkScriptCoverage();
     }
 
     /**
@@ -487,16 +498,7 @@ public class SteamWidgetService {
     }
 
     private void drawFittedString(Graphics2D g, String text, int x, int y, int maxWidth) {
-        String fitted = text == null || text.isBlank() ? "-" : text;
-        FontMetrics metrics = g.getFontMetrics();
-        if (metrics.stringWidth(fitted) <= maxWidth) {
-            g.drawString(fitted, x, y);
-            return;
-        }
-        while (fitted.length() > 1 && metrics.stringWidth(fitted + "...") > maxWidth) {
-            fitted = fitted.substring(0, fitted.length() - 1);
-        }
-        g.drawString(fitted + "...", x, y);
+        FallbackTextRenderer.drawString(g, FallbackTextRenderer.fitToWidth(g, text, maxWidth), x, y);
     }
 
     private String formatDuration(Long hours, Long minutes) {
@@ -675,7 +677,7 @@ public class SteamWidgetService {
 
         g.setFont(new Font(font, style, size));
         g.setColor(Color.decode(hexColor));
-        g.drawString(display, x, y);
+        FallbackTextRenderer.drawString(g, display, x, y);
 
         g.dispose();
     }
